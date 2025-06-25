@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Document</title>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tavusapi/sdk-js@latest/dist/tavus.min.js"></script>
+</head>
+<body>
+    <div class="index-main-content">
+        <header>
+            <h6 id="myName">Business Boom</h1>
+            <div class="logo">
+                <a href="/"><img src="" alt="Site Logo"/></a>
+            </div>
+            <nav class="menu">
+                <ul class="menuItems">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#" onclick="navigateTo('dashboard')">Businesses</a></li>
+                    <li><a href="#" onclick="navigateTo('analysis')">Planning</a></li>
+                    <li><a href="#" onclick="navigateTo('conversation')">Ai</a></li>
+                    <li><a href="#" onclick="logout()">Logout</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <!-- Main video container -->
+        <div class="video-container">
+            <video id="ai-consultant-video"></video>
+            <video id="user-video"></video>
+            <div id="connection-status"></div>
+            <div id="video-overlay">
+                <button id="fullscreen-btn"></button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div id="transcript-section">
+            <h3>Live Transcript</h3>
+            <div id="transcript-display"></div>
+            </div>
+
+            <div id="status-section">
+                <span id="duration-timer">00:00</span>
+                <span id="connection-indicator"></span>
+                <span id="tier-usage">5 min remaining</span>
+            </div>
+
+            <div id="business-context">
+                <div id="conversation-topic"></div>
+                <ul id="key-points"></ul>
+            </div>
+        </div>
+
+        <!-- User Input / Conversation Controls -->
+        <div id="input-controls-section">
+            <div id="input-mode-toggle">
+                <button id="voice-mode" class="active">Voice</button>
+                <button id="text-mode">Chat</button>
+            </div>
+
+            <div id="input-area">
+                <div id="text-input-container" style="display: none;">
+                    <textarea id="message-input" placeholder="Type your message..."></textarea>
+                    <button id="send-message">Send</button>
+                </div>
+
+                <div id="voice-controls">
+                    <button id="mute-toggle">Mute</button>
+                    <button id="camera-toggle">Camera Off</button>
+                    <div id="voice-indicator"></div>
+                </div>
+            </div>
+
+            <div id="conversation-controls">
+                <button id="start-conversation" class="primary">Start</button>
+                <button class="quick-btn">Focus on Marketing</button>
+                <button class="quick-btn">SWOT Analysis</button>
+            </div>
+        </div>
+
+
+        <footer>
+            <div class="myfoot">
+            <p>© 2025 Business Is Boomin</p>
+            <a href="about.html">About us</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/conversation.js"></script>
+</body>
+</html>
