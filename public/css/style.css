@@ -1,197 +1,199 @@
-.index-main-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-self: stretch;
+:root {
+    --overlay-color: rgba(0, 0, 0, 0.5); 
+    --light-color: #fff; 
+  }
+  
+
+body {
+    font-family: 'Poppins', sans-serif;
+    color: var(--light-color);
+    line-height: 1.6;
+    background: linear-gradient(var(--overlay-color), var(--overlay-color)), 
+                url('../images/background.gif');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
     min-height: 100vh;
-}
-
-.main-content, .action-items, .analysis-btns {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-header {
-    display: flex;
-    background-color: rgba(200, 0, 100, 0.2);
-}
-
-.menu {
-    flex: 1;
-    display: flex;
-}
-
-#myName {
-    margin-left: 15px;
-}
-
-.menuItems {
-    display: flex;
-    flex: 1;
-    list-style: none;
-    justify-content: space-evenly;
-}
-
-.Hero {
-    flex-grow: 1;
-    background-color: rgba(100, 0, 200, 0.2);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.appName {
-    flex-grow: 3;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.appHeaders {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 3;
-}
-
-#description {
-    margin: 0 30px;
-    margin-bottom: 20px;
-}
-
-
-ul.Features {
-    background-color: rgba(0, 150, 75, 0.2);
-    display: flex;
-    margin: 15px 0;
-    border: 15px;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 35px;
-    justify-content: center;
-}
-
-.dashbut {
-    display: block;
-    margin: 20px auto;
-    text-align: center;
-}
-
-.myfoot {
-    display: flex;
-    background-color: rgba(15, 75, 250, 0.2);
-    justify-content: space-evenly;
-}
-
-.welcome {
-    justify-items: center;
-}
-
-.statCards {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-.conversations {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-button {
-    align-self: center;
-}
-
-.quickact {
-    display: flex;
-    flex-direction: column;
-    border: solid rgba(0, 0, 0, 0.2);
-    align-items: center;
-}
-
-.quickact-buttons {
-    flex-basis: 100px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-    align-content: center;
-}
-
-.modal {
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: none;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background: white;
-    padding: 40px;
-    border-radius: 15px;
-    width: 400px;
-    max-width: 90%;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-}
-
-
-.modal-open {
-    overflow: hidden;
-}
-
-.modal-open .main-content{
-    filter: blur(5px);
-    pointer-events: none;
-}
-
-.close {
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-#loginForm input {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-#loginForm button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#signupForm input {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-#signupForm button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+  }
+  
+  .index-main-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-self: stretch;
+      min-height: 100vh;
+  }
+  
+  .main-content, .action-items, .analysis-btns {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+  }
+  
+  header {
+      display: flex;
+      background-color: rgba(200, 0, 100, 0.2);
+  }
+  
+  .menu {
+      flex: 1;
+      display: flex;
+  }
+  
+  #myName {
+      margin-left: 15px;
+  }
+  
+  .menuItems {
+      display: flex;
+      flex: 1;
+      list-style: none;
+      justify-content: space-evenly;
+  }
+  
+  .Hero {
+      flex-grow: 1;
+      background-color: rgba(100, 0, 200, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+  }
+  
+  .appName {
+      flex-grow: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+  }
+  
+  .appHeaders {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex-grow: 3;
+  }
+  
+  #description {
+      margin: 0 30px;
+      margin-bottom: 20px;
+  }
+  
+  ul.Features {
+      background-color: rgba(0, 150, 75, 0.2);
+      display: flex;
+      margin: 15px 0;
+      border: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 35px;
+      justify-content: center;
+  }
+  
+  .dashbut {
+      display: block;
+      margin: 20px auto;
+      text-align: center;
+  }
+  
+  .myfoot {
+      display: flex;
+      background-color: rgba(15, 75, 250, 0.2);
+      justify-content: space-evenly;
+  }
+  
+  .welcome {
+      justify-items: center;
+  }
+  
+  .statCards {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+  }
+  
+  .conversations {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+  }
+  
+  button {
+      align-self: center;
+  }
+  
+  .quickact {
+      display: flex;
+      flex-direction: column;
+      border: solid rgba(0, 0, 0, 0.2);
+      align-items: center;
+  }
+  
+  .quickact-buttons {
+      flex-basis: 100px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-evenly;
+      align-content: center;
+  }
+  
+  .modal {
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: none;
+      align-items: center;
+      justify-content: center;
+  }
+  
+  .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+  
+  .modal-open {
+      overflow: hidden;
+  }
+  
+  .modal-open .main-content {
+      filter: blur(5px);
+      pointer-events: none;
+  }
+  
+  .close {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+  }
+  
+  #loginForm input,
+  #signupForm input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+  }
+  
+  #loginForm button,
+  #signupForm button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+  }
+  
