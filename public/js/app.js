@@ -1,3 +1,4 @@
+
 let currentUser = null;
 let registeredUsers = [];
 const storedUsers = localStorage.getItem('businessBoomUsers');
@@ -50,6 +51,7 @@ function signup(email, password) {
 }
 
 function login(email, password) {
+    console.log(`I'm loading`)
     const user = registeredUsers.find(u => u.email === email && u.password === password);
 
     if (!user) {
@@ -64,15 +66,22 @@ function login(email, password) {
         tier: 'free'
     };
 
-    localStorage.setItem('businessBoomuser', JSON.stringify(currentUser));
+    localStorage.setItem('businessBoomUsers', JSON.stringify(currentUser));
     closeLoginModal();
     window.location.href = 'dashboard.html';
     return true;
 }
 
 function logout() {
+    console.log(`Before logout (${currentUser})`);
+    console.log(`Before logout - localStorage keys: (${Object.keys(localStorage)})`);
+    console.log(`businessBoomUsers: (${localStorage.getItem('businessBoomUsers')})`);
     currentUser = null;
-    localStorage.removeItem('businessBoomUser');
+    localStorage.removeItem('businessBoomUsers');
+
+    console.log(`After logout - localStorage keys: (${Object.keys(localStorage)})`);
+    console.log(`businessBoomUsers: (${localStorage.getItem('businessBoomUsers')})`);
+
     window.location.href = 'index.html';
 }
 
@@ -104,10 +113,11 @@ function createLoginModal() {
         <div class="modal-content">
             <span class="close" onclick="closeLoginModal()">&times;</span>
             <h2>Login to Business Boom</h2>
-            <form id="loginForm">
+            <form id="loginForm" onsubumit="handleLogin(event)">
                 <input type="email" id="email" placeholder="Email" required>
                 <input type="password" id="password" placeholder="Password" required>
                 <button type="submit">Login</button>
+                <button type="button" onclick="closeLoginModal()">Cancel</button>
             </form>
         </div>
     `;
@@ -123,10 +133,11 @@ function createSignupModal() {
         <div class="modal-content">
             <span class="close" onclick="closeSignupModal()">&times;</span>
             <h2>Sign Up for Business Boom</h2>
-            <form id="signupForm">
+            <form id="signupForm" onsubmit="handleSignup(event)">
                 <input type="email" id="signupEmail" placeholder="Email" required>
                 <input type="password" id="signupPassword" placeholder="Password" required>
                 <button type="submit">Sign Up</button>
+                <button type="button" onclick="closeSignupModal()">Cancel</button>
             </form>
         </div>
     `
@@ -165,24 +176,30 @@ function closeSignupModal() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            login(email, password)
-        });
+function handleLogin(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value,
+          password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        alert('Please fill in all fields');
+        return;
     }
 
-    const signupForm = document.getElementById('signupForm');
-    if (signupForm) {
-        signupForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            signup(email, password);
-        });
+    login(email, password);
+}
+
+function handleSignup(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('signupEmail').value,
+          password = document.getElementById('signupPassword').value;
+
+    if (!email || !password) {
+        alert('Please fill in all fields');
+        return;
     }
-});
+
+    signup(email, password);
+}
