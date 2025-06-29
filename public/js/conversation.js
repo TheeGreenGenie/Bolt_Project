@@ -8,7 +8,7 @@ let currentConversationId = null,
     mediaRecorder = null,
     recordedChunks = [];
     isRecording = false;
-    DEMO_MODE = true;
+    DEMO_MODE = false;
 
 
 // Configuration - ONLY CHANGE THESE TWO VALUES
@@ -60,11 +60,29 @@ function setupConversationControls() {
 }
 
 async function handleConversationToggle() {
-    console.log('Button clicked, conversationActive:', conversationActive);
+    console.log('🔄 Button clicked, conversationActive:', conversationActive);
+    console.log('🔄 isRecording:', isRecording);
+    
+    const startBtn = document.getElementById('start-conversation');
+    
     if (conversationActive) {
+        // Disable button during process
+        startBtn.disabled = true;
+        startBtn.textContent = 'Ending...';
+        
         await endConversation();
+        
+        // Re-enable button
+        startBtn.disabled = false;
     } else {
+        // Disable button during process
+        startBtn.disabled = true;
+        startBtn.textContent = 'Starting...';
+        
         await createConversation();
+        
+        // Re-enable button
+        startBtn.disabled = false;
     }
 }
 
