@@ -8,7 +8,7 @@ let currentConversationId = null,
     mediaRecorder = null,
     recordedChunks = [];
     isRecording = false;
-    DEMO_MODE = true;
+    DEMO_MODE = false;
 
 
 // Configuration - ONLY CHANGE THESE TWO VALUES
