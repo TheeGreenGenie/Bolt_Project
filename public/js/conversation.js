@@ -20,6 +20,35 @@ const TAVUS_API_KEY = 'e3415d468b3c4f2e82b8f20c78982994',
 document.addEventListener('DOMContentLoaded', function() {
     setupConversationControls();
     setupRecordingControls();
+
+    const voiceModeBtn = document.getElementById('voice-mode');
+    const textModeBtn = document.getElementById('text-mode');
+    
+    if (voiceModeBtn) {
+        voiceModeBtn.addEventListener('click', switchToVideoMode);
+    }
+    
+    if (textModeBtn) {
+        textModeBtn.addEventListener('click', switchToChatMode);
+    }
+    
+    // Chat input handling
+    const sendButton = document.getElementById('send-message');
+    const messageInput = document.getElementById('message-input');
+    
+    if (sendButton) {
+        sendButton.addEventListener('click', handleChatSubmit);
+    }
+    
+    if (messageInput) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleChatSubmit();
+            }
+        });
+    }
+
     updateConnectionStatus('Ready to start conversation');
 });
 
@@ -172,13 +201,51 @@ function displayChatMessage(sender, message) {
     }
 }
 
-/*
-Look Over this function
-*/
+async function handleChatSubmit() {
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-message');
+    
+    if (!messageInput || !messageInput.value.trim()) return;
+    
+    const userMessage = messageInput.value.trim();
+    messageInput.value = '';
+    
+    // Disable input while processing
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    sendButton.textContent = 'Thinking...';
+    
+    // Display user message
+    displayChatMessage('user', userMessage);
+    
+    // Get AI response
+    const aiResponse = await sendMessageToOpenAI(userMessage);
+    
+    // Display AI response
+    displayChatMessage('ai', aiResponse);
+    
+    // Re-enable input
+    messageInput.disabled = false;
+    sendButton.disabled = false;
+    sendButton.textContent = 'Send';
+    messageInput.focus();
+}
+
+
 async function createConversation() {
     try {
         updateConnectionStatus('Creating conversation...');
         updateStartButton('Creating...');
+        
+        // START RECORDING AUTOMATICALLY
+        console.log('🎤 Auto-starting recording with conversation...');
+        const recordingStarted = await captureAllWebsiteAudio();
+        
+        if (recordingStarted) {
+            console.log('✅ Recording started successfully');
+        } else {
+            console.log('⚠️ Recording failed, but continuing with conversation');
+        }
         
         if (DEMO_MODE) {
             startDemoConversation();
@@ -209,13 +276,13 @@ async function createConversation() {
             embedConversation(data.conversation_url);
             
             conversationActive = true;
-            updateConnectionStatus('Conversation active - you can now talk');
+            updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');
             updateStartButton('End Conversation');
 
             startConversationTracking();
 
             conversationActive = true;
-            updateConnectionStatus('Conversation actvie - you can now talk');
+            updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');
             updateStartButton('End Conversation');
         }
 
@@ -223,7 +290,12 @@ async function createConversation() {
         console.error('Error creating conversation:', error);
         updateConnectionStatus('Failed to start conversation');
         updateStartButton('Start Conversation');
+        
+        // ADDED: Stop recording if it was started but conversation failed
+        if (isRecording) {
+            stopComprehensiveRecording();
         }
+    }
 }
 
 async function captureAllWebsiteAudio() {
@@ -458,7 +530,7 @@ function setupRecordingControls() {
     }
 
     if (stopBtn) {
-        stopBtn.addEventListener('click', stopAudioRecording);
+        stopBtn.addEventListener('click', stopComprehensiveRecording);
     }
 }
 
@@ -471,16 +543,19 @@ async function endConversation() {
     try {
         updateConnectionStatus('Ending conversation...');
         
+        // ADDED: Stop recording first
+        console.log('🛑 Auto-stopping recording with conversation...');
+        if (isRecording) {
+            stopComprehensiveRecording();
+            console.log('✅ Recording stopped and saved');
+        }
+        
         await fetch(`https://tavusapi.com/v2/conversations/${currentConversationId}`, {
             method: 'DELETE',
             headers: {
                 'x-api-key': TAVUS_API_KEY
             }
         });
-        
-        if (isRecording) {
-            stopScreenRecording();
-        }
 
         // Clear conversation state
         currentConversationId = null;
@@ -488,7 +563,7 @@ async function endConversation() {
         
         // Clear video container
         const videoContainer = document.querySelector('.video-container');
-        videoContainer.innerHTML = '<p>Conversation ended. Click Start to begin a new conversation.</p>';
+        videoContainer.innerHTML = '<p>Conversation ended. Recording saved to downloads. Click Start to begin a new conversation.</p>';
         
         updateConnectionStatus('Ready to start conversation');
         updateStartButton('Start Conversation');
@@ -496,8 +571,14 @@ async function endConversation() {
     } catch (error) {
         console.error('Error ending conversation:', error);
         updateConnectionStatus('Error ending conversation');
+        
+        // ADDED: Still stop recording even if conversation end failed
+        if (isRecording) {
+            stopComprehensiveRecording();
+        }
     }
 }
+
 
 function updateConnectionStatus(status) {
     const statusElement = document.getElementById('connection-status');
