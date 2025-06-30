@@ -50,18 +50,8 @@
   }
   
   header {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-      display: flex;
-      background-color: rgb(200, 0, 0);
-=======
     display: flex;
     background-color: rgba(200, 0, 100, 0.2);
->>>>>>> Stashed changes
-=======
-    display: flex;
-    background-color: rgba(200, 0, 100, 0.2);
->>>>>>> Stashed changes
   }
   
   .menu {
