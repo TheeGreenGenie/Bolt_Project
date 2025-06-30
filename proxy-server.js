@@ -62,7 +62,7 @@ app.post('/api/chat', async (req, res) => {
                     temperature: 0.7,
                     topP: 0.8,
                     topK: 40,
-                    maxOutputTokens: 800,
+                    maxOutputTokens: 50,
                     stopSequences: ["Human:", "User:"]
                 },
                 safetySettings: [

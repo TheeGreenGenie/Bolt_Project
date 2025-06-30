@@ -9,7 +9,10 @@ let currentConversationId = null,
     chatMessages = [],
     recordedChunks = [],
     isRecording = false,
+    transcriptBuffer = [],
     chatMode = false,
+    pendingChatMode = false,
+    conversationStartTime = null,
     DEMO_MODE = false;
 
 
@@ -51,6 +54,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     updateConnectionStatus('Ready to start conversation');
+
+    const savedBusiness = localStorage.getItem('currentBusiness');
+    if (savedBusiness) {
+        window.currentBusiness = JSON.parse(savedBusiness);
+        updateBusinessContextUI();
+    }
 });
 
 function setupConversationControls() {
@@ -62,40 +71,46 @@ function setupConversationControls() {
 
 async function handleConversationToggle() {
     console.log('🔄 Button clicked, conversationActive:', conversationActive);
-    console.log('🔄 isRecording:', isRecording);
-    
     const startBtn = document.getElementById('start-conversation');
-    
+
     if (conversationActive) {
-        // Disable button during process
         startBtn.disabled = true;
         startBtn.textContent = 'Ending...';
-        
         await endConversation();
-        
-        // Re-enable button
         startBtn.disabled = false;
     } else {
-        // Disable button during process
         startBtn.disabled = true;
         startBtn.textContent = 'Starting...';
         
-        await createConversation();
+        // First ensure we have business context
+        if (!window.currentBusiness) {
+            const business = await window.promptForBusinessContext();
+            if (!business) {
+                startBtn.disabled = false;
+                startBtn.textContent = 'Start Conversation';
+                return;
+            }
+        }
         
-        // Re-enable button
+        await createConversation();
         startBtn.disabled = false;
     }
 }
 
-async function sendMessageToOpenAI(userMessage) {
+async function sendMessageToGemini(userMessage) {
+    const startTime = Date.now();
+    
     try {
-        console.log('🤖 Sending message to Claude:', userMessage);
+        console.log('🤖 Sending message to Gemini:', userMessage);
         
         // Add user message to conversation history
         chatMessages.push({
             role: "user",
             content: userMessage
         });
+
+        // Add to database
+        await window.addMessageToConversation('user', userMessage, 0, 0);
 
         const messages = chatMessages.map(msg => ({
             role: msg.role === 'assistant' ? 'assistant' : 'user',
@@ -108,48 +123,78 @@ async function sendMessageToOpenAI(userMessage) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'claude-3-haiku-20240307',
-                max_tokens: 300,
-                system: "You are an expert business consultant AI. Help entrepreneurs with business planning, SWOT analysis, market research, startup costs, financial projections, and strategic recommendations. Be conversational, ask follow-up questions, and provide specific actionable advice.",
+                model: 'gemini-1.5-flash',
+                max_tokens: 50,
+                system: `You are an expert business consultant AI helping with "${window.currentBusiness?.business_name || 'a business idea'}" in the ${window.currentBusiness?.industry || 'general'} industry. Your job is to gain neccessary preliminary data from the user you are chatting with ensuring that they tell you their product price, products, projected sales, and costs as well as other key parameters you need to plan a business. keep questions concise and separate as not to bombard the user`,
                 messages: messages
             })
         });
 
-        console.log('📡 Proxy Response status:', response.status);
-        
         if (!response.ok) {
-            const errorText = await response.text();
-            console.log('Proxy Error Details:', response.status, errorText);
             throw new Error(`Proxy API error: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Proxy Response Data', data);
-
-        let aiResponse;
-        if (data.content && data.content[0] && data.content[0].text) {
-            aiResponse = data.content[0].text.trim();
-        } else {
-            throw new Error('Unexpected response format from Claude');
-        }
+        let aiResponse = data.content[0].text.trim();
 
         chatMessages.push({
             role: 'assistant',
             content: aiResponse
-        })
+        });
 
-        console.log('Proxy response', aiResponse);
+        const tokensUsed = parseInt(data.usage?.input_tokens + data.usage?.output_tokens) || 0,
+              processingTime = parseInt(Date.now() - startTime);
+
+        await window.addMessageToConversation('ai', aiResponse, tokensUsed, processingTime);
+
         return aiResponse;
 
     } catch (error) {
-        console.error('❌ Claude API via proxy failed:', error);
-            return "I'm having trouble connecting to my AI service right now. Could you try rephrasing your business question?";
+        console.error('❌ Gemini API failed:', error);
+        const errorMessage = "I'm having trouble connecting. Could you try rephrasing your question?";
+        
+        try {
+            await window.addMessageToConversation('ai', errorMessage, 0, Date.now() - startTime);
+        } catch (dbError) {
+            console.error('Failed to log error:', dbError);
+        }
+        
+        return errorMessage;
     }
 }
 
-function switchToChatMode() {
-    chatMode = true;
+async function switchToChatMode() {
+    // Check if business already exists
+    const savedBusiness = localStorage.getItem('currentBusiness');
+    if (savedBusiness) {
+        window.currentBusiness = JSON.parse(savedBusiness);
+    }
     
+    // Only prompt if still no business
+    if (!window.currentBusiness) {
+        pendingChatMode = true;
+        const business = await window.promptForBusinessContext();
+        if (!business) {
+            pendingChatMode = false;
+            return; // User cancelled
+        }
+        // executeChatModeSwitch will be called from the modal resolve
+    } else {
+        // Business exists, directly execute chat mode
+        executeChatModeSwitch(window.currentBusiness);
+    }
+}
+
+async function executeChatModeSwitch(business) {
+    pendingChatMode = false;
+    chatMode = true;
+    window.currentBusiness = business;
+    console.log('executeChatModeSwitch called with:', business);
+
+    const dbConversation = await window.startNewConversation('gemini_chat');
+    window.currentConversation = dbConversation
+    conversationActive = true;
+
     // Hide video container
     const videoContainer = document.querySelector('.video-container');
     if (videoContainer) {
@@ -180,7 +225,7 @@ function switchToChatMode() {
     
     updateConnectionStatus('Text chat mode active');
     console.log('💬 Switched to chat mode');
-}
+};
 
 function switchToVideoMode() {
     chatMode = false;
@@ -222,9 +267,17 @@ function displayChatMessage(sender, message) {
         messageDiv.innerHTML = `
             <span class="speaker">${sender.toUpperCase()}:</span>
             <span class="text">${message}</span>
+            <span class="timestamp">${new Date().toLocaleTimeString()}</span>
         `;
         transcriptDisplay.appendChild(messageDiv);
         transcriptDisplay.scrollTop = transcriptDisplay.scrollHeight;
+        
+        // Add to transcript buffer for saving
+        transcriptBuffer.push({
+            sender,
+            message,
+            timestamp: new Date().toISOString()
+        });
     }
 }
 
@@ -246,7 +299,7 @@ async function handleChatSubmit() {
     displayChatMessage('user', userMessage);
     
     // Get AI response
-    const aiResponse = await sendMessageToOpenAI(userMessage);
+    const aiResponse = await sendMessageToGemini(userMessage);
     
     // Display AI response
     displayChatMessage('ai', aiResponse);
@@ -263,6 +316,13 @@ async function createConversation() {
     try {
         updateConnectionStatus('Creating conversation...');
         updateStartButton('Creating...');
+
+        conversationStartTime = Date.now();
+
+        const conversationType = chatMode ? 'gemini_chat' : 'tavus_video',
+              dbConversation = await window.startNewConversation(conversationType, null);
+        
+        window.currentConversation = dbConversation
         
         // START RECORDING AUTOMATICALLY
         console.log('🎤 Auto-starting recording with conversation...');
@@ -449,12 +509,26 @@ function setupSpeechSynthesisCapture() {
 }
 
 function stopComprehensiveRecording() {
-    if (comprehensiveRecorder && isRecording) {
-        comprehensiveRecorder.stop();
-        isRecording = false;
-        updateRecordingUI(false);
-        console.log('⏹️ Comprehensive recording stopped');
-    }
+    return new Promise((resolve) => {
+        if (comprehensiveRecorder && isRecording) {
+            comprehensiveRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                
+                if (websiteAudioContext) {
+                    websiteAudioContext.close();
+                    websiteAudioContext = null;
+                }
+                
+                resolve(blob);
+            };
+            
+            comprehensiveRecorder.stop();
+            isRecording = false;
+            updateRecordingUI(false);
+        } else {
+            resolve(null);
+        }
+    });
 }
 
 function startDemoConversation() {
@@ -569,12 +643,34 @@ async function endConversation() {
     
     try {
         updateConnectionStatus('Ending conversation...');
+
+        const duration = conversationStartTime ? Math.floor((Date.now() - conversationStartTime) / 1000) : 0;
+
+        let audioBlob = null;
         
         // ADDED: Stop recording first
         console.log('🛑 Auto-stopping recording with conversation...');
         if (isRecording) {
-            stopComprehensiveRecording();
+            audioBlob =  await stopComprehensiveRecording();
             console.log('✅ Recording stopped and saved');
+        }
+
+        const transcript = transcriptBuffer.map(entry =>
+            `[${entry.timestamp}] ${entry.sender.toUpperCase()}: ${entry.message}`
+        ).join('\n');
+
+        if (window.currentConversation) {
+            await window.endCurrentConversation(transcript, duration, null, null);
+
+            if (audioBlob) {
+                try {
+                    await window.uploadAudioFile(audioBlob);
+                    console.log('✅ Audio uploaded to database');
+                } catch (uploadError) {
+                    console.error('❌ Audio upload failed:', uploadError);
+                    downloadAudioRecording(audioBlob, 'backup');
+                }
+            }
         }
         
         await fetch(`https://tavusapi.com/v2/conversations/${currentConversationId}`, {
@@ -587,6 +683,10 @@ async function endConversation() {
         // Clear conversation state
         currentConversationId = null;
         conversationActive = false;
+        conversationStartTime = null;
+        transcriptBuffer = [];
+        chatMessages = [];
+        window.currentConversation = null;
         
         // Clear video container
         const videoContainer = document.querySelector('.video-container');
@@ -594,6 +694,12 @@ async function endConversation() {
         
         updateConnectionStatus('Ready to start conversation');
         updateStartButton('Start Conversation');
+
+        setTimeout(() => {
+            if (confirm('Conversation saved! view analysis results?')) {
+                window.location.href = 'analysis.html';
+            }
+        }, 1000);
         
     } catch (error) {
         console.error('Error ending conversation:', error);
@@ -622,22 +728,16 @@ function updateStartButton(text) {
     }
 }
 
-function creaeteDemoAudioOutput() {
-    const demoResponses = [
-        "Hello! I'm your AI business consultant. What business idea would you like to discuss?",
-        "That sounds like an interesting concept. Tell me more about your target market.",
-        "Let's analyze the startup costs for your business idea.",
-        "Based on what you've told me, here are some key recommendations..."
-    ];
-
-    return demoResponses;
+function updateBusinessContextUI() {
+    const contextDiv = document.getElementById('business-context');
+    if (contextDiv && window.currentBusiness) {
+        contextDiv.innerHTML = `
+            <h4>Current Discussion:</h4>
+            <p><strong>${window.currentBusiness.business_name}</strong></p>
+            <p>Type: ${window.currentBusiness.business_type} | Industry: ${window.currentBusiness.industry}</p>
+        `;
+    }
 }
 
-function playDemoAIResponse(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pith = 1.1;
-    utterance.volume = 1.0;
-
-    speechSynthesis.speak(utterance);
-}
+window.executeChatModeSwitch = executeChatModeSwitch;
+window.pendingChatMode = pendingChatMode
