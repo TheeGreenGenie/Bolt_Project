@@ -8,7 +8,7 @@ let currentConversationId = null,
     mediaRecorder = null,
     recordedChunks = [];
     isRecording = false;
-    DEMO_MODE = true;
+    DEMO_MODE = false;
 
 
 // Configuration - ONLY CHANGE THESE TWO VALUES
@@ -23,10 +23,28 @@ document.addEventListener('DOMContentLoaded', function() {
     updateConnectionStatus('Ready to start conversation');
 });
 
-function setupConversationControls() {
+async function setupConversationControls() {
     const startBtn = document.getElementById('start-conversation');
     if (startBtn) {
-        startBtn.addEventListener('click', handleConversationToggle);
+        startBtn.addEventListener('click', async function() {
+            if (conversationActive) {
+                // End conversation AND recording
+                await endConversation();
+            } else {
+                // Start recording FIRST (direct user interaction)
+                console.log('🎤 Starting recording from direct button click...');
+                const recordingStarted = await captureAllWebsiteAudio();
+                
+                if (recordingStarted) {
+                    console.log('✅ Recording started, now starting conversation...');
+                    // THEN start conversation
+                    await createConversation();
+                } else {
+                    console.log('❌ Recording failed, starting conversation without recording...');
+                    await createConversation();
+                }
+            }
+        });
     }
 }
 
@@ -201,7 +219,8 @@ async function createConversation() {
             if (!response.ok) {
                 throw new Error(`Failed to create conversation: ${response.status}`);
             }
-            
+            updateStartButton('End Conversation');
+
             const data = await response.json();
             currentConversationId = data.conversation_id;
             
@@ -209,16 +228,13 @@ async function createConversation() {
             embedConversation(data.conversation_url);
             
             conversationActive = true;
-            updateConnectionStatus('Conversation active - you can now talk');
-            updateStartButton('End Conversation');
+            if (isRecording) {
+                updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');            
+            } else {
+                updateConnectionStatus('Conversation active - you can now talk');
+            }
 
-            startConversationTracking();
-
-            conversationActive = true;
-            updateConnectionStatus('Conversation actvie - you can now talk');
-            updateStartButton('End Conversation');
-        }
-
+        };
     } catch (error) {
         console.error('Error creating conversation:', error);
         updateConnectionStatus('Failed to start conversation');
@@ -227,6 +243,11 @@ async function createConversation() {
 }
 
 async function captureAllWebsiteAudio() {
+    if (isRecording) {
+        console.log('Already recording, not starting new recording');
+        return true;
+    }
+
     try{
         console.log('Setting up comprehensive webite audio capture...');
 
@@ -466,10 +487,20 @@ function setupRecordingControls() {
 Check this function
 */
 async function endConversation() {
-    if (!currentConversationId) return;
+    if (!currentConversationId) {
+        console.log('⚠️ No conversation to end');
+        return;
+    }
     
     try {
+        console.log('🛑 endConversation() called');
         updateConnectionStatus('Ending conversation...');
+        
+        // Stop recording first
+        if (isRecording) {
+            console.log('🛑 Stopping recording...');
+            stopComprehensiveRecording();
+        }
         
         await fetch(`https://tavusapi.com/v2/conversations/${currentConversationId}`, {
             method: 'DELETE',
@@ -477,18 +508,18 @@ async function endConversation() {
                 'x-api-key': TAVUS_API_KEY
             }
         });
-        
-        if (isRecording) {
-            stopScreenRecording();
-        }
 
         // Clear conversation state
         currentConversationId = null;
-        conversationActive = false;
+        conversationActive = false;  // ✅ Make sure this is set
+        
+        console.log('✅ Conversation state cleared - conversationActive:', conversationActive);
         
         // Clear video container
         const videoContainer = document.querySelector('.video-container');
-        videoContainer.innerHTML = '<p>Conversation ended. Click Start to begin a new conversation.</p>';
+        if (videoContainer) {
+            videoContainer.innerHTML = '<p>Conversation ended. Recording saved to downloads. Click Start to begin a new conversation.</p>';
+        }
         
         updateConnectionStatus('Ready to start conversation');
         updateStartButton('Start Conversation');
@@ -496,6 +527,15 @@ async function endConversation() {
     } catch (error) {
         console.error('Error ending conversation:', error);
         updateConnectionStatus('Error ending conversation');
+        
+        // Still clean up state even if API call failed
+        currentConversationId = null;
+        conversationActive = false;  // ✅ Make sure this is set even on error
+        updateStartButton('Start Conversation');
+        
+        if (isRecording) {
+            stopComprehensiveRecording();
+        }
     }
 }
 
