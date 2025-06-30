@@ -6,106 +6,144 @@ let currentConversationId = null,
     websiteDestination = null,
     capturedElements = new Set(),
     mediaRecorder = null,
-    recordedChunks = [];
-    isRecording = false;
+    chatMessages = [],
+    recordedChunks = [],
+    isRecording = false,
+    chatMode = false,
     DEMO_MODE = false;
 
 
 // Configuration - ONLY CHANGE THESE TWO VALUES
 const TAVUS_API_KEY = 'e3415d468b3c4f2e82b8f20c78982994',
-      OPENAI_API_KEY = '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'
       REPLICA_ID = 'r4d9b2288937';
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     setupConversationControls();
     setupRecordingControls();
+
+    const voiceModeBtn = document.getElementById('voice-mode');
+    const textModeBtn = document.getElementById('text-mode');
+    
+    if (voiceModeBtn) {
+        voiceModeBtn.addEventListener('click', switchToVideoMode);
+    }
+    
+    if (textModeBtn) {
+        textModeBtn.addEventListener('click', switchToChatMode);
+    }
+    
+    // Chat input handling
+    const sendButton = document.getElementById('send-message');
+    const messageInput = document.getElementById('message-input');
+    
+    if (sendButton) {
+        sendButton.addEventListener('click', handleChatSubmit);
+    }
+    
+    if (messageInput) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleChatSubmit();
+            }
+        });
+    }
+
     updateConnectionStatus('Ready to start conversation');
 });
 
-async function setupConversationControls() {
+function setupConversationControls() {
     const startBtn = document.getElementById('start-conversation');
     if (startBtn) {
-        startBtn.addEventListener('click', async function() {
-            if (conversationActive) {
-                // End conversation AND recording
-                await endConversation();
-            } else {
-                // Start recording FIRST (direct user interaction)
-                console.log('🎤 Starting recording from direct button click...');
-                const recordingStarted = await captureAllWebsiteAudio();
-                
-                if (recordingStarted) {
-                    console.log('✅ Recording started, now starting conversation...');
-                    // THEN start conversation
-                    await createConversation();
-                } else {
-                    console.log('❌ Recording failed, starting conversation without recording...');
-                    await createConversation();
-                }
-            }
-        });
+        startBtn.addEventListener('click', handleConversationToggle);
     }
 }
 
 async function handleConversationToggle() {
-    console.log('Button clicked, conversationActive:', conversationActive);
+    console.log('🔄 Button clicked, conversationActive:', conversationActive);
+    console.log('🔄 isRecording:', isRecording);
+    
+    const startBtn = document.getElementById('start-conversation');
+    
     if (conversationActive) {
+        // Disable button during process
+        startBtn.disabled = true;
+        startBtn.textContent = 'Ending...';
+        
         await endConversation();
+        
+        // Re-enable button
+        startBtn.disabled = false;
     } else {
+        // Disable button during process
+        startBtn.disabled = true;
+        startBtn.textContent = 'Starting...';
+        
         await createConversation();
+        
+        // Re-enable button
+        startBtn.disabled = false;
     }
 }
 
 async function sendMessageToOpenAI(userMessage) {
     try {
-        console.log('🤖 Sending message to OpenAI:', userMessage);
+        console.log('🤖 Sending message to Claude:', userMessage);
         
         // Add user message to conversation history
         chatMessages.push({
             role: "user",
             content: userMessage
         });
+
+        const messages = chatMessages.map(msg => ({
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: msg.content
+        }));
         
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetch('http://localhost:3001/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini", // Cheaper and faster for hackathon
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are an expert business consultant AI. Your job is to collect ALL information neccessary to help users analyze their business ideas, provide SWOT analysis, discuss startup costs, market analysis, and strategic recommendations. Be conversational, helpful, and ask follow-up questions to gather more details about their business concept."
-                    },
-                    ...chatMessages
-                ],
-                max_tokens: 500,
-                temperature: 0.7
+                model: 'claude-3-haiku-20240307',
+                max_tokens: 300,
+                system: "You are an expert business consultant AI. Help entrepreneurs with business planning, SWOT analysis, market research, startup costs, financial projections, and strategic recommendations. Be conversational, ask follow-up questions, and provide specific actionable advice.",
+                messages: messages
             })
         });
+
+        console.log('📡 Proxy Response status:', response.status);
         
         if (!response.ok) {
-            throw new Error(`OpenAI API error: ${response.status}`);
+            const errorText = await response.text();
+            console.log('Proxy Error Details:', response.status, errorText);
+            throw new Error(`Proxy API error: ${response.status}`);
         }
         
         const data = await response.json();
-        const aiResponse = data.choices[0].message.content;
-        
-        // Add AI response to conversation history
+        console.log('Proxy Response Data', data);
+
+        let aiResponse;
+        if (data.content && data.content[0] && data.content[0].text) {
+            aiResponse = data.content[0].text.trim();
+        } else {
+            throw new Error('Unexpected response format from Claude');
+        }
+
         chatMessages.push({
-            role: "assistant",
+            role: 'assistant',
             content: aiResponse
-        });
-        
-        console.log('✅ OpenAI response received:', aiResponse);
+        })
+
+        console.log('Proxy response', aiResponse);
         return aiResponse;
-        
+
     } catch (error) {
-        console.error('❌ OpenAI API failed:', error);
-        return "I'm having trouble connecting right now. Could you try rephrasing your question about your business idea?";
+        console.error('❌ Claude API via proxy failed:', error);
+            return "I'm having trouble connecting to my AI service right now. Could you try rephrasing your business question?";
     }
 }
 
@@ -190,13 +228,51 @@ function displayChatMessage(sender, message) {
     }
 }
 
-/*
-Look Over this function
-*/
+async function handleChatSubmit() {
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-message');
+    
+    if (!messageInput || !messageInput.value.trim()) return;
+    
+    const userMessage = messageInput.value.trim();
+    messageInput.value = '';
+    
+    // Disable input while processing
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    sendButton.textContent = 'Thinking...';
+    
+    // Display user message
+    displayChatMessage('user', userMessage);
+    
+    // Get AI response
+    const aiResponse = await sendMessageToOpenAI(userMessage);
+    
+    // Display AI response
+    displayChatMessage('ai', aiResponse);
+    
+    // Re-enable input
+    messageInput.disabled = false;
+    sendButton.disabled = false;
+    sendButton.textContent = 'Send';
+    messageInput.focus();
+}
+
+
 async function createConversation() {
     try {
         updateConnectionStatus('Creating conversation...');
         updateStartButton('Creating...');
+        
+        // START RECORDING AUTOMATICALLY
+        console.log('🎤 Auto-starting recording with conversation...');
+        const recordingStarted = await captureAllWebsiteAudio();
+        
+        if (recordingStarted) {
+            console.log('✅ Recording started successfully');
+        } else {
+            console.log('⚠️ Recording failed, but continuing with conversation');
+        }
         
         if (DEMO_MODE) {
             startDemoConversation();
@@ -219,8 +295,7 @@ async function createConversation() {
             if (!response.ok) {
                 throw new Error(`Failed to create conversation: ${response.status}`);
             }
-            updateStartButton('End Conversation');
-
+            
             const data = await response.json();
             currentConversationId = data.conversation_id;
             
@@ -228,26 +303,29 @@ async function createConversation() {
             embedConversation(data.conversation_url);
             
             conversationActive = true;
-            if (isRecording) {
-                updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');            
-            } else {
-                updateConnectionStatus('Conversation active - you can now talk');
-            }
+            updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');
+            updateStartButton('End Conversation');
 
-        };
+            startConversationTracking();
+
+            conversationActive = true;
+            updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');
+            updateStartButton('End Conversation');
+        }
+
     } catch (error) {
         console.error('Error creating conversation:', error);
         updateConnectionStatus('Failed to start conversation');
         updateStartButton('Start Conversation');
+        
+        // ADDED: Stop recording if it was started but conversation failed
+        if (isRecording) {
+            stopComprehensiveRecording();
         }
+    }
 }
 
 async function captureAllWebsiteAudio() {
-    if (isRecording) {
-        console.log('Already recording, not starting new recording');
-        return true;
-    }
-
     try{
         console.log('Setting up comprehensive webite audio capture...');
 
@@ -479,7 +557,7 @@ function setupRecordingControls() {
     }
 
     if (stopBtn) {
-        stopBtn.addEventListener('click', stopAudioRecording);
+        stopBtn.addEventListener('click', stopComprehensiveRecording);
     }
 }
 
@@ -487,19 +565,16 @@ function setupRecordingControls() {
 Check this function
 */
 async function endConversation() {
-    if (!currentConversationId) {
-        console.log('⚠️ No conversation to end');
-        return;
-    }
+    if (!currentConversationId) return;
     
     try {
-        console.log('🛑 endConversation() called');
         updateConnectionStatus('Ending conversation...');
         
-        // Stop recording first
+        // ADDED: Stop recording first
+        console.log('🛑 Auto-stopping recording with conversation...');
         if (isRecording) {
-            console.log('🛑 Stopping recording...');
             stopComprehensiveRecording();
+            console.log('✅ Recording stopped and saved');
         }
         
         await fetch(`https://tavusapi.com/v2/conversations/${currentConversationId}`, {
@@ -511,15 +586,11 @@ async function endConversation() {
 
         // Clear conversation state
         currentConversationId = null;
-        conversationActive = false;  // ✅ Make sure this is set
-        
-        console.log('✅ Conversation state cleared - conversationActive:', conversationActive);
+        conversationActive = false;
         
         // Clear video container
         const videoContainer = document.querySelector('.video-container');
-        if (videoContainer) {
-            videoContainer.innerHTML = '<p>Conversation ended. Recording saved to downloads. Click Start to begin a new conversation.</p>';
-        }
+        videoContainer.innerHTML = '<p>Conversation ended. Recording saved to downloads. Click Start to begin a new conversation.</p>';
         
         updateConnectionStatus('Ready to start conversation');
         updateStartButton('Start Conversation');
@@ -528,16 +599,13 @@ async function endConversation() {
         console.error('Error ending conversation:', error);
         updateConnectionStatus('Error ending conversation');
         
-        // Still clean up state even if API call failed
-        currentConversationId = null;
-        conversationActive = false;  // ✅ Make sure this is set even on error
-        updateStartButton('Start Conversation');
-        
+        // ADDED: Still stop recording even if conversation end failed
         if (isRecording) {
             stopComprehensiveRecording();
         }
     }
 }
+
 
 function updateConnectionStatus(status) {
     const statusElement = document.getElementById('connection-status');
@@ -573,4 +641,3 @@ function playDemoAIResponse(text) {
 
     speechSynthesis.speak(utterance);
 }
-

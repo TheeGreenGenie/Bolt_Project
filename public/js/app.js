@@ -100,8 +100,6 @@ function updateUIForLoggedInUser() {
     if (welcomeElement && currentUser) {
         welcomeElement.textContent = `Welcome ${currentUser.name}! Let's start Your Business`;
     }
-
-    updateNavigation();
 }
 
 function createLoginModal() {
