@@ -270,3 +270,382 @@
     object-fit: contain;
   }
   
+  /* Business Analysis Styles */
+.analysis-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.analysis-header {
+    text-align: center;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, var(--primary-color), #9b59b6);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.analysis-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+}
+
+.analysis-header .business-type {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.analysis-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e1e8ed;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.analysis-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+/* SWOT Analysis Grid */
+.swot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.swot-section {
+    padding: 15px;
+    border-radius: 8px;
+    min-height: 120px;
+}
+
+.swot-section.strengths {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+}
+
+.swot-section.weaknesses {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+.swot-section.opportunities {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.swot-section.threats {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.swot-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.swot-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.swot-section li {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+/* Financial Grid */
+.financial-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.financial-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.financial-section h4 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.expense-item, .revenue-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.expense-item:last-child, .revenue-item:last-child {
+    border-bottom: none;
+    font-weight: 600;
+    background: rgba(219, 52, 197, 0.1);
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+/* Competitors */
+.competitors-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.competitor-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.competitor-card h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+}
+
+.competitor-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.competitor-stats span {
+    background: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+/* Licenses */
+.licenses-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.license-card {
+    background: #fff8dc;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #f39c12;
+}
+
+.license-card h4 {
+    margin: 0 0 10px 0;
+    color: #d68910;
+}
+
+.license-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.license-details span {
+    background: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #f4d03f;
+}
+
+/* Market Overview */
+.market-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.market-stat {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 8px;
+}
+
+.market-stat h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.market-stat .value {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.market-lists {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.market-list {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.market-list h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+/* Action Items */
+.action-items {
+    display: grid;
+    gap: 15px;
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.priority-badge {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 20px;
+    min-width: 70px;
+    text-align: center;
+}
+
+.priority-badge.high {
+    background: #e74c3c;
+    color: white;
+}
+
+.priority-badge.medium {
+    background: #f39c12;
+    color: white;
+}
+
+.priority-badge.low {
+    background: #27ae60;
+    color: white;
+}
+
+.action-details {
+    flex: 1;
+}
+
+.action-details h4 {
+    margin: 0 0 8px 0;
+    color: #2c3e50;
+}
+
+.action-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+}
+
+.generate-analysis-container {
+    text-align: center;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    border-radius: 15px;
+    margin: 40px auto;
+    max-width: 600px;
+}
+
+.generate-analysis-container h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.generate-analysis-container p {
+    color: #7f8c8d;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, var(--primary-color), #9b59b6);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(219, 52, 197, 0.3);
+}
+
+.btn-generate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@media (max-width: 768px) {
+    .analysis-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .swot-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .financial-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .market-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .action-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .priority-badge {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+}

@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* https://tavusapi.com https://cdn.jsdelivr.net https://huggingface.co https://*.hf.co https://*.xethub.hf.co https://cas-bridge.xethub.hf.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; frame-src 'self' https://tavus.daily.co;">
     <link rel="stylesheet" href="css/style.css">
     <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', function() {
             checkAuth();
@@ -30,34 +31,17 @@
             </nav>
         </header>
 
-        <button id="export">Export Business Data</button>
+        <button id="select-past-business" class="secondary">Select Past Business</button>
 
         <div class="main-content">
-            <div id="swot">
+            <div id="analysis-content">
                 <h3>SWOT Analysis</h3>
-            </div>
-            <div id="cost">
-                <h3>Cost Breakdown</h3>
-            </div>
-            <div id="Market Overview">
-                <h3>Market Overview</h3>
-            </div>
-            <div id="Reccomendations">
-                <h3>Reccomendations</h3>
             </div>
         </div>
 
         <div id="charts">
             <h3 id="chartitle">Chart</h3>
             <canvas id="business-charts"></canvas>
-        </div>
-
-        <div class="action-items">
-            <ul>
-                <li>Filler Item number 1</li>
-                <li>Filler Item number 2</li>
-                <li>Filler Item number 3</li>
-            </ul>
         </div>
 
         <div class="analysis-btns">
@@ -73,5 +57,85 @@
         </footer>
     </div>
     <script src="js/app.js"></script>
+    <script src="js/conversation.js"></script>
+    <script src="js\analysis-display.js"></script>
+    <script>
+        async function loadBusinessAnalysis() {
+            try {
+                console.log('Loading business analysis...');
+                console.log('Current business:', window.currentBusiness);
+                
+                if (!window.currentBusiness?.id) {
+                    document.querySelector('.main-content').innerHTML = 
+                        '<p>No business selected. <a href="dashboard.html">Go to dashboard</a></p>';
+                    return;
+                }
+                
+                try {
+                    const analysis = await window.getBusinessAnalysis(window.currentBusiness.id);
+                    displayAnalysis(analysis);
+                } catch (error) {
+                    console.log('No existing analysis, showing generate option');
+                    showGenerateAnalysisOption();
+                }
+                
+            } catch (error) {
+                console.error('Error loading analysis:', error);
+                document.querySelector('.main-content').innerHTML = 
+                    '<p>Error loading analysis. Please try again.</p>';
+            }
+        }
+
+        function showGenerateAnalysisOption() {
+            document.querySelector('.main-content').innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <h2>No Analysis Available</h2>
+                    <p>Generate a comprehensive business analysis based on your conversations.</p>
+                    <button id="generate-analysis-btn" class="btn">Generate Analysis</button>
+                </div>
+            `;
+            
+            document.getElementById('generate-analysis-btn').addEventListener('click', async function() {
+                this.disabled = true;
+                this.textContent = 'Generating...';
+                
+                try {
+                    const analysis = await window.generateBusinessAnalysis(window.currentBusiness.id);
+                    displayAnalysis(analysis);
+                } catch (error) {
+                    alert('Failed to generate analysis: ' + error.message);
+                    this.disabled = false;
+                    this.textContent = 'Generate Analysis';
+                }
+            });
+        }
+
+        function displayAnalysis(analysis) {
+            window.NewAnalysisDisplay.render(analysis, 'analysis-content');
+        }
+
+        function showGenerateAnalysisOption() {
+            document.getElementById('analysis-content').innerHTML = window.NewAnalysisDisplay.renderGenerateOption();
+            
+            document.getElementById('generate-analysis-btn').addEventListener('click', async function() {
+                this.disabled = true;
+                this.textContent = 'Generating...';
+                
+                try {
+                    const analysis = await window.generateBusinessAnalysis(window.currentBusiness.id);
+                    displayAnalysis(analysis);
+                } catch (error) {
+                    alert('Failed to generate analysis: ' + error.message);
+                    this.disabled = false;
+                    this.textContent = 'Generate Analysis';
+                }
+            });
+        }
+
+        // Load analysis when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(loadBusinessAnalysis, 1000); // Wait for other scripts to load
+        });
+    </script>
 </body>
 </html>

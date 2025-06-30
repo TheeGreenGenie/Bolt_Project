@@ -13,6 +13,9 @@ let currentConversationId = null,
     chatMode = false,
     pendingChatMode = false,
     conversationStartTime = null,
+    pendingVideoMode = false,
+    whisperPipeline = null,
+    isTranscribing = false;
     DEMO_MODE = false;
 
 
@@ -24,6 +27,7 @@ const TAVUS_API_KEY = 'e3415d468b3c4f2e82b8f20c78982994',
 document.addEventListener('DOMContentLoaded', function() {
     setupConversationControls();
     setupRecordingControls();
+    initializeWhisper();
 
     const voiceModeBtn = document.getElementById('voice-mode');
     const textModeBtn = document.getElementById('text-mode');
@@ -60,7 +64,149 @@ document.addEventListener('DOMContentLoaded', function() {
         window.currentBusiness = JSON.parse(savedBusiness);
         updateBusinessContextUI();
     }
+
+    const selectPastBtn = document.getElementById('select-past-business');
+    if (selectPastBtn) {
+        selectPastBtn.addEventListener('click', async function() {
+            const business = await window.showPastBusinessModal();
+            if (business) {
+                alert(`Selected: ${business.business_name}`);
+                updateBusinessContextUI();
+            }
+        });
+    }
 });
+
+async function initializeWhisper() {
+    try {
+        isTranscribing = true; // Mark as loading
+        updateConnectionStatus('Loading transcription model...');
+        console.log('🎤 Initializing Whisper.js...');
+        console.log('📦 Importing transformers pipeline...');
+        
+        // Import the pipeline
+        const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1');
+        
+        // Configure environment
+        env.allowRemoteModels = true;
+        env.allowLocalModels = false;
+        
+        console.log('✅ Transformers imported successfully');
+        console.log('🔄 Loading Whisper model (this may take a moment)...');
+        
+        const modelStartTime = Date.now();
+        
+        whisperPipeline = await pipeline('automatic-speech-recognition', 'Xenova/whisper-base.en', {
+            revision: 'main',
+        });
+        
+        const modelLoadTime = Date.now() - modelStartTime;
+        console.log('✅ Whisper.js initialized');
+        console.log(`⏱️ Model load time: ${modelLoadTime}ms`);
+        console.log('🎯 Model: Xenova/whisper-base.en');
+        
+        isTranscribing = false; // Mark as ready
+        updateConnectionStatus('Ready to start conversation');
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize Whisper.js:', error);
+        isTranscribing = false; // Mark as failed but ready
+        updateConnectionStatus('Transcription unavailable - conversation still works');
+    }
+}
+
+async function transcribeAudioBlob(audioBlob) {
+    if (!whisperPipeline) {
+        console.log('⚠️ Whisper not available, skipping transcription');
+        return null;
+    }
+    
+    try {
+        isTranscribing = true;
+        const startTime = Date.now();
+        updateConnectionStatus('Transcribing audio...');
+        
+        console.log('🎤 Starting Whisper transcription...');
+        console.log(`📊 Audio blob size: ${audioBlob.size} bytes`);
+        console.log(`📊 Audio blob type: ${audioBlob.type}`);
+        
+        // Convert WebM to WAV for better compatibility
+        const audioBuffer = await convertWebMToWAV(audioBlob);
+        
+        console.log(`📊 Converted audio buffer length: ${audioBuffer.length} samples`);
+        
+        // Transcribe with Whisper
+        console.log('🔄 Running Whisper inference...');
+        const result = await whisperPipeline(audioBuffer, {
+            language: 'english',
+            task: 'transcribe',
+            return_timestamps: false,
+            chunk_length_s: 30,
+            stride_length_s: 5,
+        });
+        
+        const processingTime = Date.now() - startTime;
+        console.log('✅ Whisper transcription completed');
+        console.log(`⏱️ Processing time: ${processingTime}ms`);
+        console.log(`📝 Transcript length: ${result.text.length} characters`);
+        console.log(`📝 Transcript preview: "${result.text.substring(0, 150)}..."`);
+        
+        updateConnectionStatus('Transcription completed');
+        
+        return result.text;
+        
+    } catch (error) {
+        console.error('❌ Whisper transcription failed:', error);
+        console.error('❌ Error details:', error.message);
+        updateConnectionStatus('Transcription failed - audio still saved');
+        return null;
+    } finally {
+        isTranscribing = false;
+        console.log('🏁 Transcription process finished');
+    }
+}
+
+// Helper function to convert WebM to WAV
+async function convertWebMToWAV(webmBlob) {
+    const arrayBuffer = await webmBlob.arrayBuffer();
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+        sampleRate: 16000, // Whisper expects 16kHz
+    });
+    
+    try {
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        // Get mono channel (Whisper expects mono)
+        const channelData = audioBuffer.getChannelData(0);
+        
+        // Resample to 16kHz if needed
+        if (audioBuffer.sampleRate !== 16000) {
+            return resampleAudio(channelData, audioBuffer.sampleRate, 16000);
+        }
+        
+        return channelData;
+        
+    } catch (error) {
+        console.error('❌ Audio conversion failed:', error);
+        throw error;
+    } finally {
+        audioContext.close();
+    }
+}
+
+// Simple resampling function
+function resampleAudio(audioData, originalSampleRate, targetSampleRate) {
+    const ratio = originalSampleRate / targetSampleRate;
+    const newLength = Math.round(audioData.length / ratio);
+    const result = new Float32Array(newLength);
+    
+    for (let i = 0; i < newLength; i++) {
+        const index = Math.floor(i * ratio);
+        result[i] = audioData[index];
+    }
+    
+    return result;
+}
 
 function setupConversationControls() {
     const startBtn = document.getElementById('start-conversation');
@@ -79,6 +225,12 @@ async function handleConversationToggle() {
         await endConversation();
         startBtn.disabled = false;
     } else {
+        // Check if Whisper is still loading
+        if (isTranscribing) {
+            updateConnectionStatus('Please wait for transcription model to finish loading...');
+            return;
+        }
+        
         startBtn.disabled = true;
         startBtn.textContent = 'Starting...';
         
@@ -227,9 +379,33 @@ async function executeChatModeSwitch(business) {
     console.log('💬 Switched to chat mode');
 };
 
-function switchToVideoMode() {
+async function switchToVideoMode() {
+    const savedBusiness = localStorage.getItem('currentBusiness');
+    if (savedBusiness) {
+        window.currentBusiness = JSON.parse(savedBusiness);
+    }
+
+    if (!window.currentBusiness) {
+        pendingVideoMode = true;
+        const business = await window.promptForBusinessContext();
+        if (!business) {
+            pendingVideoMode = false;
+            return;
+        }
+    } else {
+        executeVideoModeSwitch(window.currentBusiness);
+    }
+};
+
+async function executeVideoModeSwitch(business) {
+    pendingVideoMode = false;
+    window.currentBusiness = business;
+
+    const dbConversation = await window.startNewConversation('tavus_video');
+    window.currentConversation = dbConversation;
+    conversationActive = true;
     chatMode = false;
-    
+
     // Show video container
     const videoContainer = document.querySelector('.video-container');
     if (videoContainer) {
@@ -366,8 +542,6 @@ async function createConversation() {
             updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');
             updateStartButton('End Conversation');
 
-            startConversationTracking();
-
             conversationActive = true;
             updateConnectionStatus('Conversation active - you can now talk (Recording in progress)');
             updateStartButton('End Conversation');
@@ -388,11 +562,10 @@ async function createConversation() {
 async function captureAllWebsiteAudio() {
     try{
         console.log('Setting up comprehensive webite audio capture...');
-
         websiteAudioContext = new AudioContext();
         websiteDestination = websiteAudioContext.createMediaStreamDestination();
-
         try {
+
             const micStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: false,
@@ -531,6 +704,7 @@ function stopComprehensiveRecording() {
     });
 }
 
+
 function startDemoConversation() {
     embedDemoVideo();
     startDemoAudioSequence();
@@ -567,6 +741,7 @@ function startDemoAudioSequence() {
         }, item.delay);
     });
 }
+
 
 function embedConversation(conversationUrl) {
     const videoContainer = document.querySelector('.video-container');
@@ -645,40 +820,78 @@ async function endConversation() {
         updateConnectionStatus('Ending conversation...');
 
         const duration = conversationStartTime ? Math.floor((Date.now() - conversationStartTime) / 1000) : 0;
+        const conversationToEnd = window.currentConversation;
+        let savedConversationId = window.currentConversation?.id;
 
         let audioBlob = null;
+        let transcriptionText = null;
         
-        // ADDED: Stop recording first
+        // Stop recording first
         console.log('🛑 Auto-stopping recording with conversation...');
         if (isRecording) {
-            audioBlob =  await stopComprehensiveRecording();
+            audioBlob = await stopComprehensiveRecording();
             console.log('✅ Recording stopped and saved');
         }
-
-        const transcript = transcriptBuffer.map(entry =>
-            `[${entry.timestamp}] ${entry.sender.toUpperCase()}: ${entry.message}`
-        ).join('\n');
-
-        if (window.currentConversation) {
-            await window.endCurrentConversation(transcript, duration, null, null);
-
-            if (audioBlob) {
-                try {
-                    await window.uploadAudioFile(audioBlob);
-                    console.log('✅ Audio uploaded to database');
-                } catch (uploadError) {
-                    console.error('❌ Audio upload failed:', uploadError);
-                    downloadAudioRecording(audioBlob, 'backup');
-                }
+        
+        // Transcribe audio with Whisper if available
+        if (audioBlob && whisperPipeline) {
+            console.log('🎤 Starting audio transcription...');
+            transcriptionText = await transcribeAudioBlob(audioBlob);
+            
+            if (transcriptionText) {
+                console.log('✅ Audio transcribed successfully');
+                console.log('📝 Transcript preview:', transcriptionText.substring(0, 100) + '...');
             }
         }
         
-        await fetch(`https://tavusapi.com/v2/conversations/${currentConversationId}`, {
-            method: 'DELETE',
-            headers: {
-                'x-api-key': TAVUS_API_KEY
+        // Upload audio file to database
+        if (audioBlob && conversationToEnd) {
+            try {
+                await window.uploadAudioFile(audioBlob);
+                console.log('✅ Audio uploaded to database');
+            } catch (uploadError) {
+                console.error('❌ Audio upload failed:', uploadError);
+                downloadAudioRecording(audioBlob, 'backup');
             }
-        });
+        }
+
+        // Combine chat transcript with audio transcription
+        const chatTranscript = transcriptBuffer.map(entry => 
+            `[${entry.timestamp}] ${entry.sender.toUpperCase()}: ${entry.message}`
+        ).join('\n');
+        
+        const finalTranscript = transcriptionText 
+            ? `=== CHAT MESSAGES ===\n${chatTranscript}\n\n=== AUDIO TRANSCRIPTION ===\n${transcriptionText}`
+            : chatTranscript;
+
+        // Save transcript to database
+        if (window.currentConversation && transcriptionText) {
+            try {
+                await window.saveTranscriptToDatabase(transcriptionText);
+                console.log('✅ Transcript saved to database');
+            } catch (transcriptError) {
+                console.error('❌ Failed to save transcript:', transcriptError);
+            }
+        }
+
+        if (window.currentConversation) {
+            await window.endCurrentConversation(finalTranscript, duration, null, null);
+            conversationActive = false;
+        }
+        
+        // Rest of cleanup code - REPLACE the problematic line
+        if (savedConversationId) {
+            try {
+                await fetch(`https://tavusapi.com/v2/conversations/${savedConversationId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'x-api-key': TAVUS_API_KEY
+                    }
+                });
+            } catch (tavusError) {
+                console.error('Error ending Tavus conversation:', tavusError);
+            }
+        }
 
         // Clear conversation state
         currentConversationId = null;
@@ -686,6 +899,7 @@ async function endConversation() {
         conversationStartTime = null;
         transcriptBuffer = [];
         chatMessages = [];
+        savedConversationId = null;
         window.currentConversation = null;
         
         // Clear video container
@@ -705,7 +919,6 @@ async function endConversation() {
         console.error('Error ending conversation:', error);
         updateConnectionStatus('Error ending conversation');
         
-        // ADDED: Still stop recording even if conversation end failed
         if (isRecording) {
             stopComprehensiveRecording();
         }
@@ -740,4 +953,6 @@ function updateBusinessContextUI() {
 }
 
 window.executeChatModeSwitch = executeChatModeSwitch;
-window.pendingChatMode = pendingChatMode
+window.executeVideoModeSwitch = executeVideoModeSwitch;
+window.pendingChatMode = pendingChatMode;
+window.pendingVideoMode = pendingVideoMode;

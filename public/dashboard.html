@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:* https://tavusapi.com https://cdn.jsdelivr.net https://huggingface.co https://*.hf.co https://*.xethub.hf.co https://cas-bridge.xethub.hf.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; frame-src 'self' https://tavus.daily.co;">
     <link rel="stylesheet" href="css/style.css">
     <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', function() {
             checkAuth();
@@ -52,6 +53,7 @@
                     <h3>Quick Actions</h3>
                 </div>
                 <div class="quickact-buttons">
+                    <button id="select-past-business" class="secondary">Select Past Business</button>
                     <button>Start New Convo</button>
                     <button>View Latest Analysis</button>
                     <button>Continue Previous Conversation</button>
@@ -71,5 +73,6 @@
     </div>
 
     <script src="js/app.js"></script>
+    <script src="js/conversation.js"></script>
 </body>
 </html>

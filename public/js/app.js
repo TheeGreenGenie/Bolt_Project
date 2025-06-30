@@ -232,6 +232,32 @@ function handleSignup(event) {
     signup(email, password, name);
 }
 
+async function saveTranscriptToDatabase(transcriptionText) {
+    try {
+        if (!currentConversation) {
+            throw new Error('No active conversation');
+        }
+
+        const response = await fetch(`${API_BASE_URL}/conversations/${currentConversation.id}/transcript`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                transcript: transcriptionText
+            })
+        });
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error('Error saving transcript:', error);
+        throw error;
+    }
+}
+
 async function loadUserBusinesses() {
     try {
         const response = await fetch(`${API_BASE_URL}/businesses`, {
@@ -303,6 +329,62 @@ async function createConfirmedBusiness(businessData) {
     }
 }
 
+async function showPastBusinessModal() {
+    const businesses = await loadUserBusinesses();
+    
+    if (businesses.length === 0) {
+        alert('No past businesses found. Create a new one!');
+        return null;
+    }
+
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        
+        const businessList = businesses.map(business => 
+            `<div class="business-option" data-business-id="${business.id}">
+                <h4>${business.business_name}</h4>
+                <p>${business.description}</p>
+            </div>`
+        ).join('');
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2>Select Past Business</h2>
+                <p>Choose a business you've discussed before:</p>
+                
+                <div class="similar-businesses">
+                    ${businessList}
+                </div>
+                
+                <div class="modal-buttons">
+                    <button id="cancel-past-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Add click handlers
+        modal.querySelectorAll('.business-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const businessId = this.dataset.businessId;
+                const selectedBusiness = businesses.find(b => b.id === businessId);
+                window.currentBusiness = selectedBusiness;
+                localStorage.setItem('currentBusiness', JSON.stringify(selectedBusiness));
+                modal.remove();
+                resolve(selectedBusiness);
+            });
+        });
+
+        document.getElementById('cancel-past-btn').addEventListener('click', function() {
+            modal.remove();
+            resolve(null);
+        });
+    });
+}
+
 function showBusinessConfirmationModal(data) {
     return new Promise((resolve) => {
         const modal = document.createElement('div');
@@ -310,7 +392,7 @@ function showBusinessConfirmationModal(data) {
         modal.style.display = 'flex';
         
         const similarBusinessList = data.similarBusinesses.map(business => 
-            `<div class="business-option" onclick="selectExistingBusiness('${business.id}')">
+            `<div class="business-option" data-business-id="${business.id}">
                 <h4>${business.business_name}</h4>
                 <p>Type: ${business.business_type} | Industry: ${business.industry}</p>
                 <p>${business.description}</p>
@@ -328,22 +410,36 @@ function showBusinessConfirmationModal(data) {
                 </div>
                 
                 <div class="modal-buttons">
-                    <button onclick="selectNewBusiness()">No, Create New Business</button>
-                    <button onclick="closeSimilarBusinessModal()">Cancel</button>
+                    <button id="create-new-btn">No, Create New Business</button>
+                    <button id="cancel-btn">Cancel</button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
 
-        // Store data and resolve function globally for button handlers
-        window.businessModalData = data;
-        window.businessModalResolve = function(business) {
-            if (window.pendingChatMode) {
-                window.executeChatModeSwitch(business);
-            }
+        // Add click handlers
+        modal.querySelectorAll('.business-option').forEach(option => {
+            option.addEventListener('click', async function() {
+                const businessId = this.dataset.businessId;
+                const selectedBusiness = data.similarBusinesses.find(b => b.id === businessId);
+                currentBusiness = selectedBusiness;
+                localStorage.setItem('currentBusiness', JSON.stringify(selectedBusiness));
+                modal.remove();
+                resolve(selectedBusiness);
+            });
+        });
+
+        document.getElementById('create-new-btn').addEventListener('click', async function() {
+            const business = await createConfirmedBusiness(data.newBusiness);
+            modal.remove();
             resolve(business);
-        };
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', function() {
+            modal.remove();
+            resolve(null);
+        });
     });
 }
 
@@ -486,7 +582,7 @@ async function startNewConversation(conversationType, tavusConversationId = null
     }
 }
 
-async function addMessageToConversation(sender, content, tokensUsed = null, processingTime = null) {
+async function addMessageToConversation(sender, content, tokensUsed = 0, processingTime = 0) {
     try {
         if (!currentConversation) {
             throw new Error('No active conversation');
@@ -595,7 +691,56 @@ function getAuthHeaders() {
     };
 }
 
-window.findOrCreateBusiness = findOrCreateBusiness
-window.startNewConversation = startNewConversation
-window.addMessageToConversation = addMessageToConversation
-window.promptForBusinessContext = promptForBusinessContext
+// Add to app.js
+async function generateBusinessAnalysis(businessId) {
+    try {
+        console.log('🔍 Starting business analysis generation...');
+        updateConnectionStatus?.('Generating business analysis...');
+        
+        const response = await fetch(`${API_BASE_URL}/businesses/${businessId}/analysis`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(`Analysis failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Business analysis completed');
+        return data.analysis;
+
+    } catch (error) {
+        console.error('❌ Error generating analysis:', error);
+        throw error;
+    }
+}
+
+async function getBusinessAnalysis(businessId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/businesses/${businessId}/analysis`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch analysis: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.analysis;
+
+    } catch (error) {
+        console.error('❌ Error fetching analysis:', error);
+        throw error;
+    }
+}
+
+
+window.generateBusinessAnalysis = generateBusinessAnalysis;
+window.getBusinessAnalysis = getBusinessAnalysis;
+window.findOrCreateBusiness = findOrCreateBusiness;
+window.startNewConversation = startNewConversation;
+window.addMessageToConversation = addMessageToConversation;
+window.promptForBusinessContext = promptForBusinessContext;
+window.showPastBusinessModal = showPastBusinessModal;
+window.saveTranscriptToDatabase = saveTranscriptToDatabase;
