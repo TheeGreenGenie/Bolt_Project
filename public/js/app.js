@@ -735,7 +735,65 @@ async function getBusinessAnalysis(businessId) {
     }
 }
 
+// Add this function to app.js
+async function displayUserBusinesses() {
+    try {
+        const businesses = await loadUserBusinesses();
+        const container = document.querySelector('#businesses-list');
+        
+        if (!container) return;
+        
+        container.innerHTML = businesses.map(business => `
+            <div class="business-card" data-business-id="${business.id}">
+                <h3>${business.business_name}</h3>
+                <p><strong>Type:</strong> ${business.business_type} | <strong>Industry:</strong> ${business.industry}</p>
+                <p>${business.description || 'No description'}</p>
+                <div class="business-meta">
+                    <small>Created: ${new Date(business.created_at).toLocaleDateString()} | Conversations: ${business.conversation_count || 0}</small>
+                    <button class="select-business-btn" data-business-id="${business.id}">Select</button>
+                </div>
+            </div>
+        `).join('');
+        
+        // Add event listeners for select buttons
+        document.querySelectorAll('.select-business-btn').forEach(btn => {
+            btn.addEventListener('click', handleBusinessSelection);
+        });
+        
+    } catch (error) {
+        console.error('Error loading businesses:', error);
+        document.querySelector('#businesses-list').innerHTML = '<p>Error loading businesses</p>';
+    }
+}
 
+function handleBusinessSelection(event) {
+    const businessId = event.target.dataset.businessId;
+    loadUserBusinesses().then(businesses => {
+        const business = businesses.find(b => b.id === businessId);
+        if (business) {
+            window.currentBusiness = business;
+            localStorage.setItem('currentBusiness', JSON.stringify(business));
+            
+            // Update display if it exists
+            const display = document.querySelector('#current-business-display');
+            if (display) {
+                display.textContent = `Current: ${business.business_name}`;
+            }
+            
+            alert(`Selected: ${business.business_name}`);
+        }
+    });
+}
+
+// Auto-load businesses on dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.pathname.includes('dashboard.html')) {
+        setTimeout(displayUserBusinesses, 1000);
+    }
+});
+
+
+window.displayUserBusinesses = displayUserBusinesses;
 window.generateBusinessAnalysis = generateBusinessAnalysis;
 window.getBusinessAnalysis = getBusinessAnalysis;
 window.findOrCreateBusiness = findOrCreateBusiness;

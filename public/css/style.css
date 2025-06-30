@@ -649,3 +649,32 @@
         margin-bottom: 15px;
     }
 }
+
+.business-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    background: white;
+}
+
+.business-card h3 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+}
+
+.business-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.select-business-btn {
+    background: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}

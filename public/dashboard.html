@@ -33,35 +33,21 @@
             <div class="welcome">
                 <h1>Welcome {user}! Let's start Your Business</h1>
             </div>
-            <div class="statCards">
-                <ul class="statCards">
-                    <li>Filler Business #1 & it's analysis</li>
-                    <li>Filler Business #2 & it's analysis</li>
-                    <li>Filler Business #3 & it's analysis</li>
-                </ul>
+
+            <div id="businesses-display">
+                <h2>Your Businesses</h2>
+                <div id="businesses-list"></div>
             </div>
-            <button class="normbut"><a href="#" onclick="navigateTo('conversation')">Start New Conversation</a></button>
-            <div class="conversations">
-                <ul class="conversations">
-                    <li>Filler Conversation #3; 4:21, 80% of neccessary data</li>
-                    <li>Filler Conversation #2; 6:33 100% of neccessary data</li>
-                    <li>Filler Conversation #1; 3:12 40% of neccessary data</li>
-                </ul>
-            </div>
+
             <div class="quickact">
                 <div class="quickact-title">
                     <h3>Quick Actions</h3>
                 </div>
                 <div class="quickact-buttons">
                     <button id="select-past-business" class="secondary">Select Past Business</button>
-                    <button>Start New Convo</button>
-                    <button>View Latest Analysis</button>
-                    <button>Continue Previous Conversation</button>
-                    <button>Export Business Plan</button>
-                    <button>Market Research Summary</button>
-                    <button>Upload Business Documents</button>
-                    <button>View Usage</button>
-                    <button>Tutorial/Demo</button>
+                    <button><a href="#" onclick="navigateTo('conversation')">Start New Conversation</a></button>
+                    <button><a href="#" onclick="navigateTo('analysis')">View Latest Analysis</a></button>
+                    <button><a href="#" onclick="navigateTo('conversation')">Continue Previous Conversation</a></button>
                 </div>
             </div>
         <footer>
