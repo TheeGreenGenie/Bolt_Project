@@ -6,64 +6,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/style.css">
-    <title>Document</title>
-    <script>
-        window.addEventListener('DOMContentLoaded', function() {
-            checkAuth();
-        });
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="css/style.css" />
+  <title>Business Boom</title>
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      checkAuth();
+    });
+  </script>
 </head>
 <body>
-    <div class="index-main-content">
-        <header>
-            <h6 id="myName">Business Boom</h1>
-            <div class="logo">
-                <a href="/"><img src="" alt="Site Logo"/></a>
-            </div>
-            <nav class="menu">
-                <ul class="menuItems">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="#" onclick="showLoginModal()">Login</a></li>
-                    <li><a href="#" onclick="showSignupModal()">Signup</a></li>
-                </ul>
-            </nav>
-        </header>
+  <div class="index-main-content">
 
-        <div class="Hero">
-            <div class="appName">
-                <h1>Business is Boomin!</h1>
-            </div>
-            <div class="appHeaders">
-                <h3>Start a business with the help of AI</h3>
-                <p id="description">This app aims to use AI to give expert analysis on business ideas, gone are the days where you must meet with trusted professionals for an expert analysis of your business or help drafting a viable business plan. You have ideas, and we're here to help you get these ideas off the ground!</p>
-                <button><a href="#" onclick="navigateTo('conversation')">Start Here</a></button>
-            </div>
-        </div>
+    <!-- Header -->
+    <header>
+      <h6 id="myName">Business Boom</h6>
+      <div class="logo">
+        <a href="/"><img src="" alt="Site Logo"/>
+        </a>
+      </div>
+      <nav class="menu">
+        <ul class="menuItems">
+          <li><a href="index.html" class="btn">Home</a></li>
+          <li><a href="#" class="btn" onclick="showLoginModal()">Login</a></li>
+          <li><a href="#" class="btn" onclick="showSignupModal()">Signup</a></li>
+        </ul>
+      </nav>
+    </header>
 
-        <div class="Features">
-            <ul class="Features">
-                <li><a>AI Video Conversation</a></li>
-                <li><a>Business Analysis Engine</a></li>
-                <li><a>Business Reccomendations</a></li>
-                <li><a>Independent Market Research</a></li>
-                <li><a>Intelligence Dashboards</a></li>
-                <li><a>Real Time Transcription & Processing</a></li>
-            </ul>
-        </div>
+    <!-- Hero Section with image next to heading -->
+    <div class="Hero">
+      <div class="appName image-heading">
+        <h1>Business is Boomin!</h1>
+        <a href="https://bolt.new" target="_blank">
+            <img src="images/bolt.png" alt="Bolt Icon" class="bolt-icon" />
+        </a>
+      </div>
 
-        <button class="dashbut-normbut"><a href="#" onclick="navigateTo('dashboard')">See Your Ideas</a></button>
-
-        <footer>
-            <div class="myfoot">
-            <p>© 2025 Business Is Boomin</p>
-            <a href="about.html">About us</a>
-            </div>
-        </footer>
+      <div class="appHeaders">
+        <h3>Start a business with the help of AI</h3>
+        <p id="description">
+          This app aims to use AI to give expert analysis on business ideas. Gone are the days where you must meet with trusted professionals for an expert analysis of your business or help drafting a viable business plan. You have ideas, and we're here to help you get these ideas off the ground!
+        </p>
+        <a href="#" class="btn" onclick="navigateTo('conversation')">Start Here</a>
+      </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <!-- Features Section -->
+    <section class="Features">
+      <ul>
+        <li>AI Video Conversation</li>
+        <li>Business Analysis Engine</li>
+        <li>Business Recommendations</li>
+        <li>Independent Market Research</li>
+        <li>Intelligence Dashboards</li>
+        <li>Real Time Transcription & Processing</li>
+      </ul>
+    </section>
+
+    <!-- Dashboard Button -->
+    <div class="dashbut">
+      <a href="#" class="btn" onclick="navigateTo('dashboard')">See Your Ideas</a>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <div class="myfoot">
+        <p>© 2025 Business Is Boomin</p>
+        <a href="about.html">About us</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="js/app.js"></script>
 </body>
 </html>

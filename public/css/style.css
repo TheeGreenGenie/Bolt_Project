@@ -1,10 +1,13 @@
 :root {
-    --overlay-color: rgba(0, 0, 0, 0.5); 
-    --light-color: #fff; 
+    --primary-color: #db34c5bd;
+    --secondary-color: #2c3e50;
+    --accent-color: #e74c3c;
+    --light-color: #ecf0f1;
+    --dark-color: #2c3e50;
+    --overlay-color: rgba(0, 0, 0, 0.7);
   }
   
-
-body {
+  body {
     font-family: 'Poppins', sans-serif;
     color: var(--light-color);
     line-height: 1.6;
@@ -16,184 +19,259 @@ body {
     min-height: 100vh;
   }
   
+  .btn {
+    display: inline-block;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  
+  .btn:hover {
+    background: #db34c54a;
+    transform: translateY(-3px);
+  }
+  
   .index-main-content {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-self: stretch;
-      min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-self: stretch;
+    min-height: 100vh;
   }
   
   .main-content, .action-items, .analysis-btns {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
   header {
+<<<<<<< Updated upstream
       display: flex;
       background-color: rgb(200, 0, 0);
+=======
+    display: flex;
+    background-color: rgba(200, 0, 100, 0.2);
+>>>>>>> Stashed changes
   }
   
   .menu {
-      flex: 1;
-      display: flex;
+    flex: 1;
+    display: flex;
   }
   
   #myName {
-      margin-left: 15px;
+    margin-left: 15px;
   }
   
   .menuItems {
-      display: flex;
-      flex: 1;
-      list-style: none;
-      justify-content: space-evenly;
+    display: flex;
+    flex: 1;
+    list-style: none;
+    justify-content: space-evenly;
   }
   
   .Hero {
-      flex-grow: 1;
-      background-color: rgba(100, 0, 200, 0.2);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    flex-grow: 1;
+    background-color: rgba(100, 0, 200, 0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
   .appName {
-      flex-grow: 3;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+    flex-grow: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   
   .appHeaders {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      flex-grow: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 3;
+    text-align: center; /* Center all text inside appHeaders */
   }
   
   #description {
-      margin: 0 30px;
-      margin-bottom: 20px;
+    margin: 0 30px 20px;
+    text-align: center;  /* Center the paragraph text */
+    max-width: 800px;    /* Optional: limit max width for better readability */
   }
   
   ul.Features {
-      background-color: rgba(0, 150, 75, 0.2);
-      display: flex;
-      margin: 15px 0;
-      border: 15px;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 35px;
-      justify-content: center;
+    background-color: rgba(0, 150, 75, 0.2);
+    display: flex;
+    margin: 15px 0;
+    border: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 35px;
+    justify-content: center;
   }
   
   .dashbut {
-      display: block;
-      margin: 20px auto;
-      text-align: center;
+    display: block;
+    margin: 20px auto;
+    text-align: center;
   }
   
   .myfoot {
-      display: flex;
-      background-color: rgba(15, 75, 250, 0.2);
-      justify-content: space-evenly;
+    background-color: #222;
+    color: #fff;
+    padding: 1em;
+    text-align: center;
+  }
+  
+  .myfoot a {
+    color: #db34c5bd;
+    text-decoration: none;
+    margin-left: 10px;
+  }
+  
+  .myfoot a:hover {
+    text-decoration: underline;
   }
   
   .welcome {
-      justify-items: center;
+    justify-items: center;
   }
   
   .statCards {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
   }
   
   .conversations {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
   }
   
   button {
-      align-self: center;
+    align-self: center;
   }
   
   .quickact {
-      display: flex;
-      flex-direction: column;
-      border: solid rgba(0, 0, 0, 0.2);
-      align-items: center;
+    display: flex;
+    flex-direction: column;
+    border: solid rgba(0, 0, 0, 0.2);
+    align-items: center;
   }
   
   .quickact-buttons {
-      flex-basis: 100px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-evenly;
-      align-content: center;
+    flex-basis: 100px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-content: center;
   }
   
   .modal {
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100vw;
-      height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: none;
-      align-items: center;
-      justify-content: center;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: none;
+    align-items: center;
+    justify-content: center;
   }
   
   .modal-content {
-      background: white;
-      padding: 40px;
-      border-radius: 15px;
-      width: 400px;
-      max-width: 90%;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
   }
   
   .modal-open {
-      overflow: hidden;
+    overflow: hidden;
   }
   
   .modal-open .main-content {
-      filter: blur(5px);
-      pointer-events: none;
+    filter: blur(5px);
+    pointer-events: none;
   }
   
   .close {
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
   }
   
   #loginForm input,
   #signupForm input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
   }
   
   #loginForm button,
   #signupForm button {
-      width: 100%;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .text-image-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap; /* helps on smaller screens */
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .text-content {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .top-right-image {
+    width: 250px;
+    height: auto;
+    object-fit: contain;
+  }
+  
+  .image-heading {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 30px 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .image-heading h1 {
+    color: var(--light-color);
+    font-size: 2.5rem;
+    margin: 0;
+  }
+  
+  .image-heading img.bolt-icon {
+    width: 60px;
+    height: auto;
+    object-fit: contain;
   }
   
