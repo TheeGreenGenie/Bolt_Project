@@ -6,14 +6,15 @@ let currentConversationId = null,
     websiteDestination = null,
     capturedElements = new Set(),
     mediaRecorder = null,
-    recordedChunks = [];
-    isRecording = false;
+    chatMessages = [],
+    recordedChunks = [],
+    isRecording = false,
+    chatMode = false,
     DEMO_MODE = false;
 
 
 // Configuration - ONLY CHANGE THESE TWO VALUES
 const TAVUS_API_KEY = 'e3415d468b3c4f2e82b8f20c78982994',
-      OPENAI_API_KEY = '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'
       REPLICA_ID = 'r4d9b2288937';
 
 // Initialize when page loads
@@ -88,53 +89,61 @@ async function handleConversationToggle() {
 
 async function sendMessageToOpenAI(userMessage) {
     try {
-        console.log('🤖 Sending message to OpenAI:', userMessage);
+        console.log('🤖 Sending message to Claude:', userMessage);
         
         // Add user message to conversation history
         chatMessages.push({
             role: "user",
             content: userMessage
         });
+
+        const messages = chatMessages.map(msg => ({
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: msg.content
+        }));
         
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetch('http://localhost:3001/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini", // Cheaper and faster for hackathon
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are an expert business consultant AI. Your job is to collect ALL information neccessary to help users analyze their business ideas, provide SWOT analysis, discuss startup costs, market analysis, and strategic recommendations. Be conversational, helpful, and ask follow-up questions to gather more details about their business concept."
-                    },
-                    ...chatMessages
-                ],
-                max_tokens: 500,
-                temperature: 0.7
+                model: 'claude-3-haiku-20240307',
+                max_tokens: 300,
+                system: "You are an expert business consultant AI. Help entrepreneurs with business planning, SWOT analysis, market research, startup costs, financial projections, and strategic recommendations. Be conversational, ask follow-up questions, and provide specific actionable advice.",
+                messages: messages
             })
         });
+
+        console.log('📡 Proxy Response status:', response.status);
         
         if (!response.ok) {
-            throw new Error(`OpenAI API error: ${response.status}`);
+            const errorText = await response.text();
+            console.log('Proxy Error Details:', response.status, errorText);
+            throw new Error(`Proxy API error: ${response.status}`);
         }
         
         const data = await response.json();
-        const aiResponse = data.choices[0].message.content;
-        
-        // Add AI response to conversation history
+        console.log('Proxy Response Data', data);
+
+        let aiResponse;
+        if (data.content && data.content[0] && data.content[0].text) {
+            aiResponse = data.content[0].text.trim();
+        } else {
+            throw new Error('Unexpected response format from Claude');
+        }
+
         chatMessages.push({
-            role: "assistant",
+            role: 'assistant',
             content: aiResponse
-        });
-        
-        console.log('✅ OpenAI response received:', aiResponse);
+        })
+
+        console.log('Proxy response', aiResponse);
         return aiResponse;
-        
+
     } catch (error) {
-        console.error('❌ OpenAI API failed:', error);
-        return "I'm having trouble connecting right now. Could you try rephrasing your question about your business idea?";
+        console.error('❌ Claude API via proxy failed:', error);
+            return "I'm having trouble connecting to my AI service right now. Could you try rephrasing your business question?";
     }
 }
 
